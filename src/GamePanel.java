@@ -25,6 +25,7 @@ public class GamePanel extends JPanel {
     int appleX = 100;
     int appleWidth = 30;
     int appleHeight = 30;
+    int rotationAngle = 0;
     boolean gameOver;
     boolean reachedBottom = false;
     boolean reachedLeft = false;
@@ -74,41 +75,70 @@ public class GamePanel extends JPanel {
             public void keyPressed(KeyEvent e) {
                 super.keyPressed(e);
 
-                if (e.getKeyChar() == 'w') {
-                    movePlayer("w");
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_W: // W key
+                        rotationAngle = 0;
+                        if (playerDirection == "a")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
+                        else if (playerDirection == "d")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 270);
+                        else if (playerDirection == "s")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 180);
 
-                } else if (e.getKeyChar() == 'd') {
-                    movePlayer("d");
-                } else if (e.getKeyChar() == 's') {
-                    movePlayer("s");
-                } else if (e.getKeyChar() == 'a') {
-                    movePlayer("a");
+                        playerHeight = 70;
+                        playerWidth = 50;
+                        playerDirection = "w";
+                        break;
+
+                    case KeyEvent.VK_A: // A key
+                        rotationAngle = 270;
+                        if (playerDirection == "s")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
+                        else if (playerDirection == "w")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 270);
+                        else if (playerDirection == "d")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 180);
+                        playerHeight = 50;
+                        playerWidth = 70;
+                        playerDirection = "a";
+                        break;
+                    case KeyEvent.VK_S: // S key
+                        rotationAngle = 180;
+                        if (playerDirection == "d")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
+                        else if (playerDirection == "a")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 270);
+                        else if (playerDirection == "w")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 180);
+                        playerHeight = 70;
+                        playerWidth = 50;
+                        playerDirection = "s";
+                        break;
+                    case KeyEvent.VK_D: // D key
+                        rotationAngle = 90;
+                        if (playerDirection == "w")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
+                        else if (playerDirection == "s")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 270);
+                        else if (playerDirection == "a")
+                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 180);
+
+                        playerDirection = "d";
+                        playerHeight = 50;
+                        playerWidth = 70;
+                        break;
+
                 }
 
             }
         });
     }
 
-    public void movePlayer(String key) {
-        if (Objects.equals(playerDirection, key)) {
-            return;
-        }
+    public void rotatePlayer(String key) {
+        System.out.println(key);
 
-        if (playerDirection == "w" && key == "d") {
-            playerBufferedImage = rotateClockwise90(playerBufferedImage);
-            playerWidth = 70;
-            playerHeight = 50;
-        } else if (playerDirection == "w" && key == "s") {
-            playerBufferedImage = rotateClockwise90(playerBufferedImage);
-            playerBufferedImage = rotateClockwise90(playerBufferedImage);
-            playerWidth = 50;
-            playerHeight = 70;
-        } else if (playerDirection == "w" && key == "a") {
-            playerBufferedImage = rotateClockwise90(playerBufferedImage);
-            playerBufferedImage = rotateClockwise90(playerBufferedImage);
-            playerBufferedImage = rotateClockwise90(playerBufferedImage);
-            playerWidth = 70;
-            playerHeight = 50;
+        if (Objects.equals(key, "w")) {
+            //     playerBufferedImage =
         }
     }
 
@@ -242,6 +272,44 @@ public class GamePanel extends JPanel {
 
         return dest;
     }
+
+    public static BufferedImage rotateClockwise90(BufferedImage src, int angle) {
+        int width = src.getWidth();
+        int height = src.getHeight();
+        BufferedImage dest;
+
+        if (angle == 90 || angle == 270) {
+            dest = new BufferedImage(height, width, src.getType());
+        } else {
+            dest = new BufferedImage(width, height, src.getType());
+        }
+
+        Graphics2D graphics2D = dest.createGraphics();
+
+        switch (angle) {
+            case 90:
+                graphics2D.translate(height, 0);
+                graphics2D.rotate(Math.PI / 2);
+                break;
+            case 180:
+                graphics2D.translate(width, height);
+                graphics2D.rotate(Math.PI);
+                break;
+            case 270:
+                graphics2D.translate(0, width);
+                graphics2D.rotate(3 * Math.PI / 2);
+                break;
+            case 0:
+            default:
+                graphics2D.drawRenderedImage(src, null);
+                return src;
+        }
+
+        graphics2D.drawRenderedImage(src, null);
+        graphics2D.dispose();
+        return dest;
+    }
+
 }
 
 
