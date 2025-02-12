@@ -22,9 +22,9 @@ public class GamePanel extends JPanel {
     int appleX = 100;
     int appleWidth = 30;
     int appleHeight = 30;
-    int rotationAngle = 0;
-    int bulletX;
-    int bulletY;
+    int rotationAngle;
+    int bulletX = -100;
+    int bulletY = -100;
     int topWallX = 30;
     int bottomWallX = 30;
     int leftWallY = 40;
@@ -34,6 +34,8 @@ public class GamePanel extends JPanel {
     int leftWallX = 30;
     int rightWallX = 750;
     int bulletSpeed = 5;
+    int score;
+
     boolean isEnemyStunned;
     boolean gameOver;
     boolean reachedBottom = false;
@@ -380,7 +382,11 @@ public class GamePanel extends JPanel {
             if (appleRectangle.intersects(playerRectangle)) {
                 appleX = randomObject.nextInt(50, 700);
                 appleY = randomObject.nextInt(50, 400);
+                score++;
             }
+
+            g.setColor(Color.BLACK);
+            g.drawString("Score = " + score, 50, 20);
         }
 
 
