@@ -1,10 +1,7 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -15,8 +12,8 @@ import java.util.Random;
 public class GamePanel extends JPanel {
 
     int speedY = 2;
-    int circleY = 100;
-    int circleX = 50;
+    int enemyY = 100;
+    int enemyX = 50;
     int playerY = 256;
     int playerX = 375;
     int playerWidth = 70;
@@ -26,13 +23,29 @@ public class GamePanel extends JPanel {
     int appleWidth = 30;
     int appleHeight = 30;
     int rotationAngle = 0;
+    int bulletX;
+    int bulletY;
+    int topWallX = 30;
+    int bottomWallX = 30;
+    int leftWallY = 40;
+    int rightWallY = 40;
+    int topWallY = 40;
+    int bottomWallY = 500;
+    int leftWallX = 30;
+    int rightWallX = 750;
+    int bulletSpeed = 5;
+    boolean isEnemyStunned;
     boolean gameOver;
     boolean reachedBottom = false;
+    boolean isPlayerShooting;
     boolean reachedLeft = false;
+    boolean isBulletInFrame;
     String playerDirection = "a";
+    String bulletDirection = playerDirection;
 
     Rectangle playerRectangle;
     Ellipse2D enemyCircle;
+    Ellipse2D bulletCircle;
     Rectangle appleRectangle;
     Random randomObject = new Random();
 
@@ -40,6 +53,7 @@ public class GamePanel extends JPanel {
     BufferedImage appleBufferedImage;
     BufferedImage blueBallBufferedImage;
     BufferedImage playerBufferedImage;
+    GameTimer timerThread;
 
     // this is a constructor of the class
     GamePanel(GameWindow passAGameWindowObject) {
@@ -49,10 +63,48 @@ public class GamePanel extends JPanel {
         playerRectangle = new Rectangle();
         enemyCircle = new Ellipse2D.Float();
         appleRectangle = new Rectangle();
+        bulletCircle = new Ellipse2D.Float();
 
         attachKeyListener();
         attachMouseListener();
         importFruit();
+    }
+
+    public static BufferedImage rotateClockwise90(BufferedImage src, int angle) {
+        int width = src.getWidth();
+        int height = src.getHeight();
+        BufferedImage dest;
+
+        if (angle == 90 || angle == 270) {
+            dest = new BufferedImage(height, width, src.getType());
+        } else {
+            dest = new BufferedImage(width, height, src.getType());
+        }
+
+        Graphics2D graphics2D = dest.createGraphics();
+
+        switch (angle) {
+            case 90:
+                graphics2D.translate(height, 0);
+                graphics2D.rotate(Math.PI / 2);
+                break;
+            case 180:
+                graphics2D.translate(width, height);
+                graphics2D.rotate(Math.PI);
+                break;
+            case 270:
+                graphics2D.translate(0, width);
+                graphics2D.rotate(3 * Math.PI / 2);
+                break;
+            case 0:
+            default:
+                graphics2D.drawRenderedImage(src, null);
+                return src;
+        }
+
+        graphics2D.drawRenderedImage(src, null);
+        graphics2D.dispose();
+        return dest;
     }
 
     public void importFruit() {
@@ -154,6 +206,50 @@ public class GamePanel extends JPanel {
                 movePlayer(e);
             }
         });
+
+        addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+// this is the starting point of the bullet
+                if (!isBulletInFrame) {
+                    isPlayerShooting = true;
+                    bulletDirection = playerDirection;
+                    if (playerDirection == "a") {
+                        bulletX = playerX + playerWidth / 2;
+                        bulletY = playerY + playerHeight / 2;
+                    } else if (playerDirection == "w") {
+                        bulletX = playerX + playerWidth / 2 - 12;
+                        bulletY = playerY + playerHeight / 2;
+                    } else if (playerDirection == "d") {
+                        bulletX = playerX + playerWidth / 2;
+                        bulletY = playerY + playerHeight / 2 - 12;
+                    } else {
+                        bulletX = playerX + playerWidth / 2 + 5;
+                        bulletY = playerY + playerHeight / 2;
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
     }
 
     public void movePlayer(MouseEvent event) {
@@ -174,32 +270,34 @@ public class GamePanel extends JPanel {
         while (!gameOver) {
 //            System.out.println(circleX + "," + circleY + "," + rectX + "," + rectY);
             // stops circle leaving rectangle top & bottom
-            if (circleY <= 450 && !reachedBottom) {
-                circleY = circleY + speedY;
-                if (circleY >= 450) {
-                    reachedBottom = true;
-                }
-            } else if (circleY > 50) {
-                circleY = circleY - speedY;
-                circleX = circleX + 1;
+            if (!isEnemyStunned) {
+                if (enemyY <= 450 && !reachedBottom) {
+                    enemyY = enemyY + speedY;
+                    if (enemyY >= 450) {
+                        reachedBottom = true;
+                    }
+                } else if (enemyY > 50) {
+                    enemyY = enemyY - speedY;
+                    enemyX = enemyX + 1;
 
-                if (circleY <= 50) {
-                    // This will execute when the ball reaches the bottom
-                    // speedY = randomObject.nextInt(2, 3);
-                    reachedBottom = false;
-                    circleY = 50;
+                    if (enemyY <= 50) {
+                        // This will execute when the ball reaches the bottom
+                        // speedY = randomObject.nextInt(2, 3);
+                        reachedBottom = false;
+                        enemyY = 50;
+                    }
                 }
-            }
-            // stops circle leaving rectangle left & right
-            if (circleX <= 40) {
-                reachedLeft = true;
-            } else if (circleX >= 700) {
-                reachedLeft = false;
-            }
-            if (reachedLeft) {
-                circleX = circleX + speedY;
-            } else {
-                circleX = circleX - speedY;
+                // stops circle leaving rectangle left & right
+                if (enemyX <= 40) {
+                    reachedLeft = true;
+                } else if (enemyX >= 700) {
+                    reachedLeft = false;
+                }
+                if (reachedLeft) {
+                    enemyX = enemyX + speedY;
+                } else {
+                    enemyX = enemyX - speedY;
+                }
             }
 
             // System.out.println(speedY + " " + circleY);
@@ -220,22 +318,18 @@ public class GamePanel extends JPanel {
 
         gameOver = enemyCircle.intersects(playerX, playerY, 50, 50);
         setBackground(Color.LIGHT_GRAY);
-        g.fillRect(30, 40, 720, 10); // T
-        g.fillRect(30, 500, 720, 10); // B
-        g.fillRect(30, 40, 10, 470); // L
-        g.fillRect(750, 40, 10, 470); // R
+        g.fillRect(topWallX, topWallY, 720, 10); // T
+        g.fillRect(bottomWallX, bottomWallY, 720, 10); // B
+        g.fillRect(leftWallX, leftWallY, 10, 470); // L
+        g.fillRect(rightWallX, rightWallY, 10, 470); // Right
 
 
         if (gameOver) {
             gameWindowObject.playerDied();
         } else {
             g.setColor(Color.red);
-            enemyCircle.setFrame(circleX, circleY, 50, 50);
-            g.drawImage(blueBallBufferedImage, circleX, circleY, 50, 50, null);
-
-            g.setColor(Color.GREEN);
-            playerRectangle.setBounds(playerX, playerY, playerWidth, playerHeight);
-            g.drawImage(playerBufferedImage, playerX, playerY, playerWidth, playerHeight, null);
+            enemyCircle.setFrame(enemyX, enemyY, 50, 50);
+            g.drawImage(blueBallBufferedImage, enemyX, enemyY, 50, 50, null);
 
             g.setColor(Color.red);
             g.drawRect(playerX, playerY, playerWidth, playerHeight);
@@ -245,8 +339,45 @@ public class GamePanel extends JPanel {
             appleRectangle.setBounds(appleX, appleY, appleWidth, appleHeight);
             g.drawImage(appleBufferedImage, appleX, appleY, appleWidth, appleHeight, null);
 
-            if (appleRectangle.intersects(playerRectangle)) {
+            g.setColor(Color.BLACK);
+            bulletCircle.setFrame(bulletX, bulletY, 15, 15);
+            if (!isEnemyStunned) {
+                isEnemyStunned = bulletCircle.intersects(enemyX, enemyY, 50, 50);
+                if (isEnemyStunned) {
+                    timerThread = new GameTimer(3, new GameTimer.timerListener() {
+                        @Override
+                        public void timerFinished() {
+                            System.out.println("finished");
+                            isEnemyStunned = false;
+                        }
+                    });
+                }
+            }
 
+            //  System.out.println(isEnemyStunned);
+            g.fillOval(bulletX, bulletY, 15, 15);
+
+            if (isPlayerShooting) {
+                isBulletInFrame = bulletX > topWallX && bulletX < rightWallX
+                        && bulletY > topWallY && bulletY < bottomWallY;
+
+                if (bulletDirection == "a") {
+                    bulletX = bulletX - bulletSpeed;
+                } else if (bulletDirection == "d") {
+                    bulletX = bulletX + bulletSpeed;
+                } else if (bulletDirection == "w") {
+                    bulletY = bulletY - bulletSpeed;
+                } else {
+                    bulletY = bulletY + bulletSpeed;
+                }
+            }
+
+            /* drawing player here on top of bullet */
+            g.setColor(Color.GREEN);
+            playerRectangle.setBounds(playerX, playerY, playerWidth, playerHeight);
+            g.drawImage(playerBufferedImage, playerX, playerY, playerWidth, playerHeight, null);
+
+            if (appleRectangle.intersects(playerRectangle)) {
                 appleX = randomObject.nextInt(50, 700);
                 appleY = randomObject.nextInt(50, 400);
             }
@@ -257,57 +388,6 @@ public class GamePanel extends JPanel {
 //        newVariable = (Graphics2D) g;
 //        newVariable.setStroke(new BasicStroke(5));
 //        g.drawLine(50, 500, circleX + 25, circleY + 25);
-    }
-
-    public static BufferedImage rotateClockwise90(BufferedImage src) {
-        int width = src.getWidth();
-        int height = src.getHeight();
-
-        BufferedImage dest = new BufferedImage(height, width, src.getType());
-
-        Graphics2D graphics2D = dest.createGraphics();
-        graphics2D.translate((height - width) / 2, (height - width) / 2);
-        graphics2D.rotate(Math.PI / 2, height / 2, width / 2);
-        graphics2D.drawRenderedImage(src, null);
-
-        return dest;
-    }
-
-    public static BufferedImage rotateClockwise90(BufferedImage src, int angle) {
-        int width = src.getWidth();
-        int height = src.getHeight();
-        BufferedImage dest;
-
-        if (angle == 90 || angle == 270) {
-            dest = new BufferedImage(height, width, src.getType());
-        } else {
-            dest = new BufferedImage(width, height, src.getType());
-        }
-
-        Graphics2D graphics2D = dest.createGraphics();
-
-        switch (angle) {
-            case 90:
-                graphics2D.translate(height, 0);
-                graphics2D.rotate(Math.PI / 2);
-                break;
-            case 180:
-                graphics2D.translate(width, height);
-                graphics2D.rotate(Math.PI);
-                break;
-            case 270:
-                graphics2D.translate(0, width);
-                graphics2D.rotate(3 * Math.PI / 2);
-                break;
-            case 0:
-            default:
-                graphics2D.drawRenderedImage(src, null);
-                return src;
-        }
-
-        graphics2D.drawRenderedImage(src, null);
-        graphics2D.dispose();
-        return dest;
     }
 
 }
