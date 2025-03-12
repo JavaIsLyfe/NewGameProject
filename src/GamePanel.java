@@ -20,8 +20,8 @@ public class GamePanel extends JPanel {
     int playerHeight = 50;
     int appleY = 100;
     int appleX = 100;
-    int appleWidth = 30;
-    int appleHeight = 30;
+    int fruitWidth = 30;
+    int fruitHeight = 30;
     int rotationAngle;
     int bulletX = -100;
     int bulletY = -100;
@@ -55,6 +55,7 @@ public class GamePanel extends JPanel {
     BufferedImage appleBufferedImage;
     BufferedImage blueBallBufferedImage;
     BufferedImage playerBufferedImage;
+    ImportImages imageImporter;
     GameTimer timerThread;
 
     // this is a constructor of the class
@@ -66,6 +67,8 @@ public class GamePanel extends JPanel {
         enemyCircle = new Ellipse2D.Float();
         appleRectangle = new Rectangle();
         bulletCircle = new Ellipse2D.Float();
+        imageImporter = new ImportImages(); // OBJ
+
 
         attachKeyListener();
         attachMouseListener();
@@ -334,12 +337,15 @@ public class GamePanel extends JPanel {
             g.drawImage(blueBallBufferedImage, enemyX, enemyY, 50, 50, null);
 
             g.setColor(Color.red);
-            g.drawRect(playerX, playerY, playerWidth, playerHeight);
+          //  g.drawRect(playerX, playerY, playerWidth, playerHeight);
 
             g.setColor(Color.blue);
-            g.drawRect(appleRectangle.x, appleRectangle.y, appleRectangle.width, appleRectangle.height);
-            appleRectangle.setBounds(appleX, appleY, appleWidth, appleHeight);
-            g.drawImage(appleBufferedImage, appleX, appleY, appleWidth, appleHeight, null);
+         //   g.drawRect(appleRectangle.x, appleRectangle.y, appleRectangle.width, appleRectangle.height);
+            appleRectangle.setBounds(appleX, appleY, fruitWidth, fruitHeight);
+            g.drawImage(imageImporter.getFruit(), appleX, appleY, fruitWidth, fruitHeight, null);
+        //    g.drawImage(appleBufferedImage,100,100, fruitWidth, fruitHeight,null);
+
+
 
             g.setColor(Color.BLACK);
             bulletCircle.setFrame(bulletX, bulletY, 15, 15);
@@ -379,9 +385,11 @@ public class GamePanel extends JPanel {
             playerRectangle.setBounds(playerX, playerY, playerWidth, playerHeight);
             g.drawImage(playerBufferedImage, playerX, playerY, playerWidth, playerHeight, null);
 
+            /* this is where we check collision between player and fruit */
             if (appleRectangle.intersects(playerRectangle)) {
                 appleX = randomObject.nextInt(50, 700);
                 appleY = randomObject.nextInt(50, 400);
+                imageImporter.fruitGenerator();
                 score++;
             }
 
