@@ -11,9 +11,7 @@ import java.util.Random;
 
 public class GamePanel extends JPanel {
 
-    int speedY = 2;
-    int enemyY = 100;
-    int enemyX = 50;
+
     int playerY = 256;
     int playerX = 375;
     int playerWidth = 70;
@@ -35,28 +33,26 @@ public class GamePanel extends JPanel {
     int rightWallX = 750;
     int bulletSpeed = 5;
     int score;
-
-    boolean isEnemyStunned;
     boolean gameOver;
-    boolean reachedBottom = false;
     boolean isPlayerShooting;
-    boolean reachedLeft = false;
     boolean isBulletInFrame;
+    boolean fruitCollision;
     String playerDirection = "a";
     String bulletDirection = playerDirection;
 
     Rectangle playerRectangle;
     Ellipse2D enemyCircle;
     Ellipse2D bulletCircle;
+
     Rectangle appleRectangle;
     Random randomObject = new Random();
 
     GameWindow gameWindowObject;
-    BufferedImage appleBufferedImage;
-    BufferedImage blueBallBufferedImage;
     BufferedImage playerBufferedImage;
     ImportImages imageImporter;
-    GameTimer timerThread;
+    Enemy enemyObject;
+    Enemy enemyObject1;
+    Enemy[] enemyList = new Enemy[2];
 
     // this is a constructor of the class
     GamePanel(GameWindow passAGameWindowObject) {
@@ -66,9 +62,13 @@ public class GamePanel extends JPanel {
         playerRectangle = new Rectangle();
         enemyCircle = new Ellipse2D.Float();
         appleRectangle = new Rectangle();
-        bulletCircle = new Ellipse2D.Float();
-        imageImporter = new ImportImages(); // OBJ
+        bulletCircle = new Ellipse2D.Float(); // Ellipse2D object
 
+        imageImporter = new ImportImages(); // OBJ
+        enemyObject = new Enemy(50,100);
+        enemyObject1 = new Enemy(300,500);
+        enemyList[0] = enemyObject;
+        enemyList[1] = enemyObject1;
 
         attachKeyListener();
         attachMouseListener();
@@ -113,14 +113,10 @@ public class GamePanel extends JPanel {
     }
 
     public void importFruit() {
-        URL apple;
-        URL blueBall = getClass().getResource("BlueBallSpriteTest.PNG");
+
         URL player = getClass().getResource("player.PNG");
-        apple = getClass().getResource("apple.png");
         try {
-            blueBallBufferedImage = ImageIO.read(blueBall);
             playerBufferedImage = ImageIO.read(player);
-            appleBufferedImage = ImageIO.read(apple);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -274,39 +270,8 @@ public class GamePanel extends JPanel {
     public void run() {
         while (!gameOver) {
 //            System.out.println(circleX + "," + circleY + "," + rectX + "," + rectY);
-            // stops circle leaving rectangle top & bottom
-            if (!isEnemyStunned) {
-                if (enemyY <= 450 && !reachedBottom) {
-                    enemyY = enemyY + speedY;
-                    if (enemyY >= 450) {
-                        reachedBottom = true;
-                    }
-                } else if (enemyY > 50) {
-                    enemyY = enemyY - speedY;
-                    enemyX = enemyX + 1;
-
-                    if (enemyY <= 50) {
-                        // This will execute when the ball reaches the bottom
-                        // speedY = randomObject.nextInt(2, 3);
-                        reachedBottom = false;
-                        enemyY = 50;
-                    }
-                }
-                // stops circle leaving rectangle left & right
-                if (enemyX <= 40) {
-                    reachedLeft = true;
-                } else if (enemyX >= 700) {
-                    reachedLeft = false;
-                }
-                if (reachedLeft) {
-                    enemyX = enemyX + speedY;
-                } else {
-                    enemyX = enemyX - speedY;
-                }
-            }
-
-            // System.out.println(speedY + " " + circleY);
-
+            enemyObject.move();
+            enemyObject1.move();
             repaint();
 
             try {
@@ -322,6 +287,10 @@ public class GamePanel extends JPanel {
         super.paint(g);
 
         gameOver = enemyCircle.intersects(playerX, playerY, 50, 50);
+        fruitCollision = enemyCircle.intersects(appleX, appleY, fruitWidth, fruitHeight);
+        if (fruitCollision) {
+            fruitRandomizer(false);
+        }
         setBackground(Color.LIGHT_GRAY);
         g.fillRect(topWallX, topWallY, 720, 10); // T
         g.fillRect(bottomWallX, bottomWallY, 720, 10); // B
@@ -333,34 +302,25 @@ public class GamePanel extends JPanel {
             gameWindowObject.playerDied();
         } else {
             g.setColor(Color.red);
-            enemyCircle.setFrame(enemyX, enemyY, 50, 50);
-            g.drawImage(blueBallBufferedImage, enemyX, enemyY, 50, 50, null);
+
+            for (int i = 0; i < 2; i++){
+                enemyList[i].draw(bulletCircle,g);
+            }
+            //enemyObject.draw(bulletCircle,g);
+            enemyCircle.setFrame(enemyObject.getX(), enemyObject.getY(), 50, 50);
 
             g.setColor(Color.red);
-          //  g.drawRect(playerX, playerY, playerWidth, playerHeight);
+            //  g.drawRect(playerX, playerY, playerWidth, playerHeight);
 
             g.setColor(Color.blue);
-         //   g.drawRect(appleRectangle.x, appleRectangle.y, appleRectangle.width, appleRectangle.height);
+            //   g.drawRect(appleRectangle.x, appleRectangle.y, appleRectangle.width, appleRectangle.height);
             appleRectangle.setBounds(appleX, appleY, fruitWidth, fruitHeight);
             g.drawImage(imageImporter.getFruit(), appleX, appleY, fruitWidth, fruitHeight, null);
-        //    g.drawImage(appleBufferedImage,100,100, fruitWidth, fruitHeight,null);
-
+            //    g.drawImage(appleBufferedImage,100,100, fruitWidth, fruitHeight,null);
 
 
             g.setColor(Color.BLACK);
             bulletCircle.setFrame(bulletX, bulletY, 15, 15);
-            if (!isEnemyStunned) {
-                isEnemyStunned = bulletCircle.intersects(enemyX, enemyY, 50, 50);
-                if (isEnemyStunned) {
-                    timerThread = new GameTimer(3, new GameTimer.timerListener() {
-                        @Override
-                        public void timerFinished() {
-                            System.out.println("finished");
-                            isEnemyStunned = false;
-                        }
-                    });
-                }
-            }
 
             //  System.out.println(isEnemyStunned);
             g.fillOval(bulletX, bulletY, 15, 15);
@@ -386,12 +346,9 @@ public class GamePanel extends JPanel {
             g.drawImage(playerBufferedImage, playerX, playerY, playerWidth, playerHeight, null);
 
             /* this is where we check collision between player and fruit */
-            if (appleRectangle.intersects(playerRectangle)) {
-                appleX = randomObject.nextInt(50, 700);
-                appleY = randomObject.nextInt(50, 400);
-                imageImporter.fruitGenerator();
-                score++;
-            }
+            if (appleRectangle.intersects(playerRectangle))
+                fruitRandomizer(true);
+
 
             g.setColor(Color.BLACK);
             g.drawString("Score = " + score, 50, 20);
@@ -402,6 +359,13 @@ public class GamePanel extends JPanel {
 //        newVariable = (Graphics2D) g;
 //        newVariable.setStroke(new BasicStroke(5));
 //        g.drawLine(50, 500, circleX + 25, circleY + 25);
+    }
+
+    public void fruitRandomizer(boolean scoreUpdate) {
+        appleX = randomObject.nextInt(50, 700);
+        appleY = randomObject.nextInt(50, 400);
+        imageImporter.fruitGenerator();
+        if (scoreUpdate) score++;
     }
 
 }

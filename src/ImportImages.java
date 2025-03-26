@@ -8,6 +8,7 @@ public class ImportImages {
 
     Random fruitGeneration = new Random();
     int fruitGenerated;
+    BufferedImage blueBallBufferedImage;
     private BufferedImage[] fruitCollection = new BufferedImage[7];
 
     /* constructor of the class ImportImages */
@@ -19,6 +20,7 @@ public class ImportImages {
         URL grapeURL = getClass().getResource("fruitCollection/grape.png");
         URL pineappleURL = getClass().getResource("fruitCollection/pineapple.png");
         URL strawberryURL = getClass().getResource("fruitCollection/strawberry.png");
+        URL blueBall = getClass().getResource("BlueBallSpriteTest.PNG");
         try {
             //extraFruits = ImageIO.read(blackberryURL);
             fruitCollection[0] = ImageIO.read(bananaURL);
@@ -29,6 +31,8 @@ public class ImportImages {
             fruitCollection[5] = ImageIO.read(pineappleURL);
             fruitCollection[6] = ImageIO.read(strawberryURL);
             fruitGenerated = fruitGeneration.nextInt(0, 7);
+            blueBallBufferedImage = ImageIO.read(blueBall);
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

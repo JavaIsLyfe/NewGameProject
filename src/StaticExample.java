@@ -1,3 +1,6 @@
+import java.util.Arrays;
+import java.util.Random;
+
 public class StaticExample {
     static int count = 0;
     int test = 5;
@@ -7,12 +10,15 @@ public class StaticExample {
     }
 
     public static void main(String[] args) {
-        StaticExample object1 = new StaticExample();
-        StaticExample object2 = new StaticExample();
-        StaticExample object3 = new StaticExample();
-        System.out.println(object1.count);
-        System.out.println(object2.count);
-        System.out.println(object3.count);
+        Random randomGenerator = new Random();
+        int [] array1 = new int[100];
+        for(int i = 0; i != 100; i++){
+            array1 [i] = randomGenerator.nextInt(0,100);
+        }
+
+        System.out.println(Arrays.toString(array1));
+
+
     }
 
 }
