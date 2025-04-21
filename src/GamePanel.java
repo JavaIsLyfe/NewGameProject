@@ -6,42 +6,26 @@ import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Objects;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class GamePanel extends JPanel {
 
-
     int playerY = 256;
     int playerX = 375;
-    int playerWidth = 70;
-    int playerHeight = 50;
-    int appleY = 100;
-    int appleX = 100;
-    int fruitWidth = 30;
-    int fruitHeight = 30;
+    static int playerWidth = 70;
+    static int playerHeight = 50;
+    int fruitY = 100;
+    int fruitX = 100;
+    static int fruitWidth = 30;
+    static int fruitHeight = 30;
     int rotationAngle;
-    int bulletX = -100;
-    int bulletY = -100;
-    int topWallX = 30;
-    int bottomWallX = 30;
-    int leftWallY = 40;
-    int rightWallY = 40;
-    int topWallY = 40;
-    int bottomWallY = 500;
-    int leftWallX = 30;
-    int rightWallX = 750;
-    int bulletSpeed = 5;
     int score;
     boolean gameOver;
     boolean isPlayerShooting;
-    boolean isBulletInFrame;
-    boolean fruitCollision;
     String playerDirection = "a";
-    String bulletDirection = playerDirection;
 
     Rectangle playerRectangle;
-    Ellipse2D enemyCircle;
     Ellipse2D bulletCircle;
 
     Rectangle appleRectangle;
@@ -50,9 +34,9 @@ public class GamePanel extends JPanel {
     GameWindow gameWindowObject;
     BufferedImage playerBufferedImage;
     ImportImages imageImporter;
-    Enemy enemyObject;
-    Enemy enemyObject1;
-    Enemy[] enemyList = new Enemy[2];
+    Enemy enemyObj1;
+    ArrayList<Enemy> newEnemyList = new ArrayList<>();
+    ArrayList<Bullet> bulletList = new ArrayList<>();
 
     // this is a constructor of the class
     GamePanel(GameWindow passAGameWindowObject) {
@@ -60,15 +44,12 @@ public class GamePanel extends JPanel {
         requestFocus();
         gameWindowObject = passAGameWindowObject;
         playerRectangle = new Rectangle();
-        enemyCircle = new Ellipse2D.Float();
         appleRectangle = new Rectangle();
         bulletCircle = new Ellipse2D.Float(); // Ellipse2D object
 
         imageImporter = new ImportImages(); // OBJ
-        enemyObject = new Enemy(50,100);
-        enemyObject1 = new Enemy(300,500);
-        enemyList[0] = enemyObject;
-        enemyList[1] = enemyObject1;
+        enemyObj1 = new Enemy(50, 100, imageImporter.blueBallBufferedImage);
+        newEnemyList.add(enemyObj1);
 
         attachKeyListener();
         attachMouseListener();
@@ -78,15 +59,15 @@ public class GamePanel extends JPanel {
     public static BufferedImage rotateClockwise90(BufferedImage src, int angle) {
         int width = src.getWidth();
         int height = src.getHeight();
-        BufferedImage dest;
+        BufferedImage test;
 
         if (angle == 90 || angle == 270) {
-            dest = new BufferedImage(height, width, src.getType());
+            test = new BufferedImage(height, width, src.getType());
         } else {
-            dest = new BufferedImage(width, height, src.getType());
+            test = new BufferedImage(width, height, src.getType());
         }
 
-        Graphics2D graphics2D = dest.createGraphics();
+        Graphics2D graphics2D = test.createGraphics();
 
         switch (angle) {
             case 90:
@@ -109,7 +90,7 @@ public class GamePanel extends JPanel {
 
         graphics2D.drawRenderedImage(src, null);
         graphics2D.dispose();
-        return dest;
+        return test;
     }
 
     public void importFruit() {
@@ -131,8 +112,7 @@ public class GamePanel extends JPanel {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_W: // W key
                         rotationAngle = 0;
-                        if (playerDirection == "a")
-                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
+                        if (playerDirection == "a") playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
                         else if (playerDirection == "d")
                             playerBufferedImage = rotateClockwise90(playerBufferedImage, 270);
                         else if (playerDirection == "s")
@@ -145,8 +125,7 @@ public class GamePanel extends JPanel {
 
                     case KeyEvent.VK_A: // A key
                         rotationAngle = 270;
-                        if (playerDirection == "s")
-                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
+                        if (playerDirection == "s") playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
                         else if (playerDirection == "w")
                             playerBufferedImage = rotateClockwise90(playerBufferedImage, 270);
                         else if (playerDirection == "d")
@@ -157,8 +136,7 @@ public class GamePanel extends JPanel {
                         break;
                     case KeyEvent.VK_S: // S key
                         rotationAngle = 180;
-                        if (playerDirection == "d")
-                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
+                        if (playerDirection == "d") playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
                         else if (playerDirection == "a")
                             playerBufferedImage = rotateClockwise90(playerBufferedImage, 270);
                         else if (playerDirection == "w")
@@ -169,8 +147,7 @@ public class GamePanel extends JPanel {
                         break;
                     case KeyEvent.VK_D: // D key
                         rotationAngle = 90;
-                        if (playerDirection == "w")
-                            playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
+                        if (playerDirection == "w") playerBufferedImage = rotateClockwise90(playerBufferedImage, 90);
                         else if (playerDirection == "s")
                             playerBufferedImage = rotateClockwise90(playerBufferedImage, 270);
                         else if (playerDirection == "a")
@@ -185,14 +162,6 @@ public class GamePanel extends JPanel {
 
             }
         });
-    }
-
-    public void rotatePlayer(String key) {
-        System.out.println(key);
-
-        if (Objects.equals(key, "w")) {
-            //     playerBufferedImage =
-        }
     }
 
     public void attachMouseListener() {
@@ -212,33 +181,20 @@ public class GamePanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
 // this is the starting point of the bullet
-                if (!isBulletInFrame) {
-                    isPlayerShooting = true;
-                    bulletDirection = playerDirection;
-                    if (playerDirection == "a") {
-                        bulletX = playerX + playerWidth / 2;
-                        bulletY = playerY + playerHeight / 2;
-                    } else if (playerDirection == "w") {
-                        bulletX = playerX + playerWidth / 2 - 12;
-                        bulletY = playerY + playerHeight / 2;
-                    } else if (playerDirection == "d") {
-                        bulletX = playerX + playerWidth / 2;
-                        bulletY = playerY + playerHeight / 2 - 12;
-                    } else {
-                        bulletX = playerX + playerWidth / 2 + 5;
-                        bulletY = playerY + playerHeight / 2;
-                    }
-                }
+//                if (!isBulletInFrame) {
+//                    isPlayerShooting = true;
+//                    bulletDirection = playerDirection;
+//                                    }
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
-
+                isPlayerShooting = true;
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-
+                isPlayerShooting = false;
             }
 
             @Override
@@ -270,8 +226,10 @@ public class GamePanel extends JPanel {
     public void run() {
         while (!gameOver) {
 //            System.out.println(circleX + "," + circleY + "," + rectX + "," + rectY);
-            enemyObject.move();
-            enemyObject1.move();
+
+            for (Enemy enemy : newEnemyList) {
+                enemy.move();
+            }
             repaint();
 
             try {
@@ -285,17 +243,19 @@ public class GamePanel extends JPanel {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-
-        gameOver = enemyCircle.intersects(playerX, playerY, 50, 50);
-        fruitCollision = enemyCircle.intersects(appleX, appleY, fruitWidth, fruitHeight);
-        if (fruitCollision) {
-            fruitRandomizer(false);
+        for (int i = 0; i < newEnemyList.size(); i++) {
+            gameOver = newEnemyList.get(i).detectPlayerCollision(playerX, playerY);
+            if (gameOver) break;
+            if (newEnemyList.get(i).detectFruitCollision(fruitX, fruitY)) {
+                fruitRandomizer(false);
+            }
         }
+
         setBackground(Color.LIGHT_GRAY);
-        g.fillRect(topWallX, topWallY, 720, 10); // T
-        g.fillRect(bottomWallX, bottomWallY, 720, 10); // B
-        g.fillRect(leftWallX, leftWallY, 10, 470); // L
-        g.fillRect(rightWallX, rightWallY, 10, 470); // Right
+        g.fillRect(Constant.TOP_WALL_X, Constant.TOP_WALL_Y, 720, 10); // T
+        g.fillRect(Constant.BOTTOM_WALL_X, Constant.BOTTOM_WALL_Y, 720, 10); // B
+        g.fillRect(Constant.LEFT_WALL_X, Constant.LEFT_WALL_Y, 10, 470); // L
+        g.fillRect(Constant.RIGHT_WALL_X, Constant.RIGHT_WALL_Y, 10, 470); // Right
 
 
         if (gameOver) {
@@ -303,41 +263,36 @@ public class GamePanel extends JPanel {
         } else {
             g.setColor(Color.red);
 
-            for (int i = 0; i < 2; i++){
-                enemyList[i].draw(bulletCircle,g);
+            for (Enemy enemy : newEnemyList) {
+                enemy.draw(bulletCircle, g);
             }
-            //enemyObject.draw(bulletCircle,g);
-            enemyCircle.setFrame(enemyObject.getX(), enemyObject.getY(), 50, 50);
 
             g.setColor(Color.red);
             //  g.drawRect(playerX, playerY, playerWidth, playerHeight);
 
             g.setColor(Color.blue);
-            //   g.drawRect(appleRectangle.x, appleRectangle.y, appleRectangle.width, appleRectangle.height);
-            appleRectangle.setBounds(appleX, appleY, fruitWidth, fruitHeight);
-            g.drawImage(imageImporter.getFruit(), appleX, appleY, fruitWidth, fruitHeight, null);
-            //    g.drawImage(appleBufferedImage,100,100, fruitWidth, fruitHeight,null);
+            appleRectangle.setBounds(fruitX, fruitY, fruitWidth, fruitHeight);
+            g.drawImage(imageImporter.getFruit(), fruitX, fruitY, fruitWidth, fruitHeight, null);
 
-
+            // bullet is drawn
             g.setColor(Color.BLACK);
-            bulletCircle.setFrame(bulletX, bulletY, 15, 15);
+            // bulletCircle.setFrame(bulletX, bulletY, 15, 15);
 
-            //  System.out.println(isEnemyStunned);
-            g.fillOval(bulletX, bulletY, 15, 15);
-
-            if (isPlayerShooting) {
-                isBulletInFrame = bulletX > topWallX && bulletX < rightWallX
-                        && bulletY > topWallY && bulletY < bottomWallY;
-
-                if (bulletDirection == "a") {
-                    bulletX = bulletX - bulletSpeed;
-                } else if (bulletDirection == "d") {
-                    bulletX = bulletX + bulletSpeed;
-                } else if (bulletDirection == "w") {
-                    bulletY = bulletY - bulletSpeed;
+            for (int i = 1; i < bulletList.size();) {
+                Bullet bullet = bulletList.get(i);
+                if (!bullet.isInFrame()) {
+                    bulletList.remove(i); // Don't increment i, because list shrinks
                 } else {
-                    bulletY = bulletY + bulletSpeed;
+                    bullet.shoot(playerDirection);
+                    bullet.draw(g);
+                    i++; // Only increment if nothing was removed
                 }
+            }
+            if (isPlayerShooting && bulletList.size() < 10) {
+                Bullet bullet1 = new Bullet(playerX, playerY,playerDirection);
+                bulletList.add(bullet1);
+
+
             }
 
             /* drawing player here on top of bullet */
@@ -346,8 +301,7 @@ public class GamePanel extends JPanel {
             g.drawImage(playerBufferedImage, playerX, playerY, playerWidth, playerHeight, null);
 
             /* this is where we check collision between player and fruit */
-            if (appleRectangle.intersects(playerRectangle))
-                fruitRandomizer(true);
+            if (appleRectangle.intersects(playerRectangle)) fruitRandomizer(true);
 
 
             g.setColor(Color.BLACK);
@@ -362,11 +316,18 @@ public class GamePanel extends JPanel {
     }
 
     public void fruitRandomizer(boolean scoreUpdate) {
-        appleX = randomObject.nextInt(50, 700);
-        appleY = randomObject.nextInt(50, 400);
+        fruitX = randomObject.nextInt(50, 700);
+        fruitY = randomObject.nextInt(50, 400);
         imageImporter.fruitGenerator();
         if (scoreUpdate) score++;
+        if (newEnemyList.size() < 2 && score > 15) addNewEnemy();
+
+
     }
+
+    public void addNewEnemy() {
+        newEnemyList.add(new Enemy(enemyObj1.getX(), enemyObj1.getY(), imageImporter.redBallBufferedImage));
+    } // TODO randomise second enemy X + Y
 
 }
 

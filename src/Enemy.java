@@ -1,5 +1,6 @@
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
 
 public class Enemy {
 
@@ -9,13 +10,18 @@ public class Enemy {
     boolean reachedBottom = false;
     boolean reachedLeft = false;
     boolean isEnemyStunned;
+    boolean isEnemyCollision;
+    Ellipse2D collisionBox;
     GameTimer timerThread;
     ImportImages enemyImage = new ImportImages();
+    BufferedImage redEnemyImage;
 
-    public Enemy(int x,int y){
+    public Enemy(int x, int y, BufferedImage redEnemyImage) {
         enemyX = x;
         enemyY = y;
-    };
+        this.redEnemyImage = redEnemyImage;
+        collisionBox = new Ellipse2D.Float();
+    }
 
     public void move() {
         // stops circle leaving rectangle top & bottom
@@ -52,9 +58,8 @@ public class Enemy {
         // System.out.println(speedY + " " + circleY);
     }
 
-    public void draw(Ellipse2D bulletCircle, Graphics g){
-
-        g.drawImage(enemyImage.blueBallBufferedImage, enemyX, enemyY, 50, 50, null);
+    public void draw(Ellipse2D bulletCircle, Graphics g) {
+        g.drawImage(redEnemyImage, enemyX, enemyY, 50, 50, null);
         if (!isEnemyStunned) {
             isEnemyStunned = bulletCircle.intersects(enemyX, enemyY, 50, 50);
             if (isEnemyStunned) {
@@ -67,14 +72,23 @@ public class Enemy {
                 });
             }
         }
-
     }
 
-    public int getX(){
+    public boolean detectPlayerCollision(int playerX, int playerY) {
+        collisionBox.setFrame(enemyX, enemyY, 50, 50);
+        return collisionBox.intersects(playerX, playerY, GamePanel.playerWidth, GamePanel.playerHeight);
+    }
+
+    public boolean detectFruitCollision(int fruitX, int fruitY) {
+        collisionBox.setFrame(enemyX, enemyY, 50, 50);
+        return collisionBox.intersects(fruitX, fruitY, GamePanel.fruitWidth, GamePanel.fruitHeight);
+    }
+
+    public int getX() {
         return enemyX;
     }
 
-    public int getY(){
+    public int getY() {
         return enemyY;
     }
 
