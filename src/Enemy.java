@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
@@ -7,14 +8,16 @@ public class Enemy {
     private int enemyY;
     private int enemyX;
     int speedY = 2;
+    int timerVariable = 0;
     boolean reachedBottom = false;
     boolean reachedLeft = false;
     boolean isEnemyStunned;
-    boolean isEnemyCollision;
+    boolean flag;
+    Timer timer;
     Ellipse2D collisionBox;
     GameTimer timerThread;
-    ImportImages enemyImage = new ImportImages();
     BufferedImage redEnemyImage;
+
 
     public Enemy(int x, int y, BufferedImage redEnemyImage) {
         enemyX = x;
@@ -58,21 +61,20 @@ public class Enemy {
         // System.out.println(speedY + " " + circleY);
     }
 
-    public void draw(Ellipse2D bulletCircle, Graphics g) {
+    public void draw(Graphics g) {
         g.drawImage(redEnemyImage, enemyX, enemyY, 50, 50, null);
-        if (!isEnemyStunned) {
-            isEnemyStunned = bulletCircle.intersects(enemyX, enemyY, 50, 50);
-            if (isEnemyStunned) {
-                timerThread = new GameTimer(3, new GameTimer.timerListener() {
-                    @Override
-                    public void timerFinished() {
-                        System.out.println("finished");
-                        isEnemyStunned = false;
-                    }
-                });
+
+        if (isEnemyStunned) {
+            if (timerVariable > 1000) {
+                timerVariable = 0;
+                isEnemyStunned = false;
             }
+
+            timerVariable++;
+//            System.out.println(timerVariable);
         }
     }
+
 
     public boolean detectPlayerCollision(int playerX, int playerY) {
         collisionBox.setFrame(enemyX, enemyY, 50, 50);

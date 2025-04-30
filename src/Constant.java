@@ -8,6 +8,7 @@ public class Constant {
     public static final int BOTTOM_WALL_Y = 500;
     public static final int LEFT_WALL_X = 30;
     public static final int RIGHT_WALL_X = 750;
-
+    public static final int BULLET_SIZE = 8;
+    public static final int ENEMY_SIZE = 50;
 
 }

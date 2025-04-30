@@ -35,8 +35,10 @@ public class GamePanel extends JPanel {
     BufferedImage playerBufferedImage;
     ImportImages imageImporter;
     Enemy enemyObj1;
+    Enemy stunnedEnemy;
     ArrayList<Enemy> newEnemyList = new ArrayList<>();
     ArrayList<Bullet> bulletList = new ArrayList<>();
+    ArrayList<Enemy> stunnedEnemyList = new ArrayList<>();
 
     // this is a constructor of the class
     GamePanel(GameWindow passAGameWindowObject) {
@@ -180,11 +182,7 @@ public class GamePanel extends JPanel {
         addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-// this is the starting point of the bullet
-//                if (!isBulletInFrame) {
-//                    isPlayerShooting = true;
-//                    bulletDirection = playerDirection;
-//                                    }
+
             }
 
             @Override
@@ -264,7 +262,7 @@ public class GamePanel extends JPanel {
             g.setColor(Color.red);
 
             for (Enemy enemy : newEnemyList) {
-                enemy.draw(bulletCircle, g);
+                enemy.draw(g);
             }
 
             g.setColor(Color.red);
@@ -280,9 +278,11 @@ public class GamePanel extends JPanel {
 
             for (int i = 1; i < bulletList.size();) {
                 Bullet bullet = bulletList.get(i);
-                if (!bullet.isInFrame()) {
-                    bulletList.remove(i); // Don't increment i, because list shrinks
-                } else {
+                stunnedEnemy = bullet.checkEnemyCollision(newEnemyList);
+                if (stunnedEnemy != null) stunnedEnemy.isEnemyStunned = true;
+
+                if (!bullet.isInFrame()) bulletList.remove(i); // Don't increment i, because list shrinks
+                else {
                     bullet.shoot(playerDirection);
                     bullet.draw(g);
                     i++; // Only increment if nothing was removed
@@ -291,8 +291,6 @@ public class GamePanel extends JPanel {
             if (isPlayerShooting && bulletList.size() < 10) {
                 Bullet bullet1 = new Bullet(playerX, playerY,playerDirection);
                 bulletList.add(bullet1);
-
-
             }
 
             /* drawing player here on top of bullet */
@@ -302,7 +300,6 @@ public class GamePanel extends JPanel {
 
             /* this is where we check collision between player and fruit */
             if (appleRectangle.intersects(playerRectangle)) fruitRandomizer(true);
-
 
             g.setColor(Color.BLACK);
             g.drawString("Score = " + score, 50, 20);
